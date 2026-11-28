@@ -75,6 +75,35 @@ const matches = vm.runInNewContext(normalizeCode + ';Zm');
     assert(!/正版|支持原作者|抖音/.test(await page.locator('body').innerText()));
     assert.equal(apiRequests.length, 0);
     await page.screenshot({ path: path.join(output, 'local-home.png'), fullPage: true });
+    const progressBeforeBrowsing = await page.evaluate(() => localStorage.getItem('chem-review-v1'));
+    for (const part of ['choice', 'process', 'organic', 'principle', 'equilibrium']) {
+      await page.goto('https://chem-review-hh57.pages.dev/?dataSource=local#topic/' + part);
+      const cardsInPart = snapshot.index.cards.filter(card => card.part.includes(part));
+      const buttons = page.locator('.topic-open');
+      await buttons.first().waitFor();
+      assert.equal(await buttons.count(), cardsInPart.length);
+      for (const index of [0, cardsInPart.length - 1]) {
+        await buttons.nth(index).click();
+        const dialog = page.getByRole('dialog');
+        await dialog.locator('.knowledge-full').waitFor();
+        const fullCard = snapshot.cards.find(card => card.id === cardsInPart[index].id);
+        assert.equal(await dialog.locator('#knowledge-title').innerText(), fullCard.topic);
+        assert((await dialog.locator('.knowledge-answers').innerText()).includes(fullCard.answers[0]));
+        if (part === 'organic' && index === 0) await page.screenshot({ path: path.join(output, 'knowledge-detail.png') });
+        assert.equal(await page.evaluate(() => localStorage.getItem('chem-review-v1')), progressBeforeBrowsing);
+        await page.getByRole('button', { name: '关闭知识点详情', exact: true }).click();
+        await dialog.waitFor({ state: 'detached' });
+        assert(page.url().endsWith('#topic/' + part));
+      }
+      // Android's system back uses WebView history; it should dismiss the detail first.
+      await buttons.first().click();
+      await page.getByRole('dialog').locator('.knowledge-full').waitFor();
+      await page.goBack();
+      await page.getByRole('dialog').waitFor({ state: 'detached' });
+    }
+    console.log('PASS: knowledge details open without edit mode in all five topics, show answers, preserve progress, and close with back.');
+    await page.goto('https://chem-review-hh57.pages.dev/?dataSource=local');
+    await page.getByRole('heading', { name: '化学复习', exact: true }).waitFor();
     await page.getByRole('button', { name: '开始复习', exact: true }).click();
     await page.locator('.card-shell').waitFor();
     console.log('Review buttons:', await page.locator('.card-shell button').allTextContents());

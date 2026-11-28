@@ -8,12 +8,13 @@
 
 ## 安装
 
-打开 [Releases](https://github.com/HuTaoHome/ChemistryReview/releases/latest)，下载 `chemistry-review-1.0.apk`完成安装。打开“化学知识点复习”。首次启动默认使用本地数据，无需联网。
+打开 [Releases](https://github.com/HuTaoHome/ChemistryReview/releases/latest)，下载 `chemistry-review-1.0.1.apk`完成安装。打开“化学知识点复习”。首次启动默认使用本地数据，无需联网。
 
 最低支持 **Android 6.0（API 23）**。可在设置中导出进度作为备份。
 
 ## 功能
 
+- **知识点详情**：进入板块后，点击任意知识点即可查看完整内容、答案和解析。
 - **随时选择数据来源**：顶部常驻“网站数据 / 本地数据”按钮，记住上次选择。
 - **离线复习**：安装包内置题目、答案、解析及化学公式字体，断网可用。
 - **三种练习模式**：卡片、填空、选择；多空卡片不提供选择模式。
