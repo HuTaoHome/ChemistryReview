@@ -1,0 +1,14 @@
+{
+  "name": "chemistry-review-checks",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Browser checks for the ChemistryReview Android app",
+  "scripts": {
+    "check:data": "node tools/verify-web.cjs --unit-only",
+    "check:local": "node tools/verify-web.cjs --local-only",
+    "check:web": "node tools/verify-web.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}

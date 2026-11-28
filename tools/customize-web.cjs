@@ -1,0 +1,28 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const root = path.resolve(__dirname, '../app/src/main/assets/web');
+const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+const jsPath = html.match(/src="(\/assets\/[^\"]+\.js)"/)[1];
+const cssPath = html.match(/href="(\/assets\/[^\"]+\.css)"/)[1];
+let js = fs.readFileSync(path.join(root, jsPath), 'utf8');
+const start = js.indexOf('function mo(){');
+const end = js.indexOf('const c3=', start);
+if (start < 0 || end < 0) throw new Error('Website footer adapter changed.');
+js = js.slice(0, start) + 'function mo(){return C.jsx("footer",{className:"designer-credit",children:"Designed By HuTao"})}' + js.slice(end);
+js = js.replace(' 多设备同步要等账号功能，目前未做。', '');
+js = js.replace('C.jsxs("div",{className:"card-sign",children:["知识点整理 · ",Ji," / ",el]})', 'null');
+const aboutStart = js.lastIndexOf('C.jsxs("div",{className:"owner-box"');
+const aboutEnd = js.indexOf(']})', aboutStart);
+if (aboutStart < 0 || aboutEnd < 0) throw new Error('Website about adapter changed.');
+js = js.slice(0, aboutStart) + 'C.jsxs("div",{className:"owner-box",children:[C.jsx("p",{className:"muted",children:"数据提供：原作者B站 Lnt1c"}),C.jsx("a",{className:"project-link",href:"https://github.com/HuTaoHome/ChemistryReview",children:"GitHub · HuTaoHome/ChemistryReview"})]})' + js.slice(aboutEnd + 3);
+// Remove unused original watermark labels from the bundled source as well.
+const labelsStart = js.indexOf('const Ji=');
+const labelsEnd = js.indexOf('function on(', labelsStart);
+if (labelsStart >= 0 && labelsEnd >= 0) js = js.slice(0, labelsStart) + js.slice(labelsEnd);
+fs.writeFileSync(path.join(root, jsPath), js);
+let css = fs.readFileSync(path.join(root, cssPath), 'utf8');
+css = css.replace(/[^{}]*\.watermark[^{}]*\{[^}]*\}/g, '');
+css = css.replace(/\/\* HuTao branding \*\/[\s\S]*$/, '');
+css += '\n/* HuTao branding */\n.designer-credit{position:fixed;left:0;right:0;bottom:0;z-index:31;padding:6px 10px calc(6px + env(safe-area-inset-bottom));text-align:center;font-size:11px;line-height:1.5;color:#60716e;background:linear-gradient(to top,#f4f6f8fa,#f4f6f8df);pointer-events:none}.project-link{display:inline-block;color:#0f766e;text-decoration:underline;overflow-wrap:anywhere;padding:6px 0}\n';
+fs.writeFileSync(path.join(root, cssPath), css);
+console.log('Applied HuTao footer and about page.');
