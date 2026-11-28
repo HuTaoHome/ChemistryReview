@@ -8,9 +8,13 @@ import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Insets;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.RippleDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -43,7 +47,7 @@ public class MainActivity extends Activity {
     private static final String HOST = "chem-review-hh57.pages.dev";
     private static final String HOME = "https://" + HOST + "/";
     private static final int TEAL = Color.rgb(15, 118, 110);
-    private static final int PAPER = Color.rgb(245, 248, 247);
+    private static final int PAPER = Color.rgb(244, 246, 248);
     private static final int OPEN_JSON = 100, SAVE_JSON = 101;
     private WebView webView;
     private FrameLayout content;
@@ -84,7 +88,11 @@ public class MainActivity extends Activity {
         root.addView(createSourceBar());
         content = new FrameLayout(this);
         root.addView(content, new LinearLayout.LayoutParams(-1, 0, 1));
-        setContentView(root);
+        FrameLayout stage = new FrameLayout(this);
+        FrameLayout page = new FrameLayout(this);
+        page.addView(root, new FrameLayout.LayoutParams(-1, -1));
+        stage.addView(page, new FrameLayout.LayoutParams(-1, -1));
+        setContentView(stage);
         if (Build.VERSION.SDK_INT >= 30) root.post(() -> {
             android.view.WindowInsetsController controller = getWindow().getInsetsController();
             if (controller != null) controller.setSystemBarsAppearance(
@@ -99,24 +107,66 @@ public class MainActivity extends Activity {
         }
         String hash = state == null ? null : state.getString("route");
         openSource(hash);
+        if (state == null) {
+            LaunchAnimationView launch = new LaunchAnimationView(this, page);
+            stage.addView(launch, new FrameLayout.LayoutParams(-1, -1));
+            launch.play();
+        }
     }
 
     private View createSourceBar() {
         LinearLayout bar = new LinearLayout(this);
-        bar.setOrientation(LinearLayout.VERTICAL);
-        bar.setPadding(dp(16), dp(6), dp(16), dp(8));
-        LinearLayout row = new LinearLayout(this);
-        row.setGravity(Gravity.CENTER_VERTICAL);
-        row.addView(text("数据来源", 14, Color.rgb(24, 45, 43)), new LinearLayout.LayoutParams(0, -2, 1));
-        websiteButton = button("网站数据", () -> switchSource(false));
-        localButton = button("本地数据", () -> switchSource(true));
-        row.addView(websiteButton, new LinearLayout.LayoutParams(dp(100), dp(46)));
-        row.addView(localButton, new LinearLayout.LayoutParams(dp(100), dp(46)));
-        bar.addView(row);
-        sourceDetail = text("", 12, Color.rgb(96, 113, 110));
-        bar.addView(sourceDetail);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setPadding(dp(16), dp(8), dp(16), dp(4));
+
+        LinearLayout caption = new LinearLayout(this);
+        caption.setOrientation(LinearLayout.VERTICAL);
+        TextView label = text("数据来源", 12, Color.rgb(96, 113, 110));
+        caption.addView(label);
+        sourceDetail = text("", 11, Color.rgb(125, 139, 136));
+        sourceDetail.setSingleLine(true);
+        sourceDetail.setEllipsize(TextUtils.TruncateAt.END);
+        LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1, -2);
+        detailParams.topMargin = dp(3);
+        caption.addView(sourceDetail, detailParams);
+        LinearLayout.LayoutParams captionParams = new LinearLayout.LayoutParams(0, -2, 1);
+        captionParams.rightMargin = dp(12);
+        bar.addView(caption, captionParams);
+
+        LinearLayout segments = new LinearLayout(this);
+        segments.setGravity(Gravity.CENTER_VERTICAL);
+        segments.setPadding(dp(4), dp(4), dp(4), dp(4));
+        segments.setBackground(rounded(Color.rgb(229, 237, 235), 24));
+        websiteButton = sourceButton("网站", false);
+        localButton = sourceButton("本地", true);
+        segments.addView(websiteButton, new LinearLayout.LayoutParams(0, -1, 1));
+        LinearLayout.LayoutParams localParams = new LinearLayout.LayoutParams(0, -1, 1);
+        localParams.leftMargin = dp(4);
+        segments.addView(localButton, localParams);
+        bar.addView(segments, new LinearLayout.LayoutParams(dp(164), dp(48)));
         updateSourceBar();
         return bar;
+    }
+
+    private GradientDrawable rounded(int color, int radius) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(color);
+        drawable.setCornerRadius(dp(radius));
+        return drawable;
+    }
+
+    private Button sourceButton(String title, boolean useLocal) {
+        Button button = button(title, () -> switchSource(useLocal));
+        button.setMinHeight(0);
+        button.setMinimumHeight(0);
+        button.setMinWidth(0);
+        button.setMinimumWidth(0);
+        button.setPadding(dp(8), 0, dp(8), 0);
+        button.setSingleLine(true);
+        button.setGravity(Gravity.CENTER);
+        button.setStateListAnimator(null);
+        button.setElevation(0);
+        return button;
     }
 
     private void updateSourceBar() {
@@ -124,10 +174,18 @@ public class MainActivity extends Activity {
             boolean selected = (button == localButton) == localMode;
             button.setSelected(selected);
             button.setTextColor(selected ? Color.WHITE : TEAL);
-            button.setBackgroundTintList(ColorStateList.valueOf(selected ? TEAL : Color.rgb(225, 239, 235)));
-            button.setContentDescription(button.getText() + (selected ? "，当前已选" : "，点击切换"));
+            button.setTypeface(Typeface.DEFAULT, selected ? Typeface.BOLD : Typeface.NORMAL);
+            button.setBackgroundTintList(null);
+            button.setBackground(new RippleDrawable(
+                    ColorStateList.valueOf(selected ? 0x33FFFFFF : 0x180F766E),
+                    rounded(selected ? TEAL : Color.TRANSPARENT, 20), rounded(Color.WHITE, 20)));
+            button.setContentDescription((button == localButton ? "本地数据" : "网站数据")
+                    + (selected ? "，当前已选" : "，点击切换"));
         }
-        sourceDetail.setText(localMode ? snapshotLabel : "联网读取网站最新题库 · 断网时可切换本地数据");
+        sourceDetail.setText(localMode ? "内置题库 · 离线可用" : "网站题库 · 联网获取");
+        String detail = localMode ? snapshotLabel : "联网读取网站最新题库，断网时可切换本地数据";
+        sourceDetail.setContentDescription(detail);
+        if (Build.VERSION.SDK_INT >= 26) sourceDetail.setTooltipText(detail);
     }
 
     private String sourceUrl() { return HOME + "?dataSource=" + (localMode ? "local" : "website"); }

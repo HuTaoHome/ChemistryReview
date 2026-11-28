@@ -3,7 +3,8 @@
 
     <application
         android:allowBackup="false"
-        android:icon="@drawable/ic_chemistry"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
         android:label="化学知识点复习"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
