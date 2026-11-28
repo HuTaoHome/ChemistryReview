@@ -44,7 +44,5 @@ try {
     Copy-Item 'app/build/outputs/apk/release/app-release.apk' $destination -Force
     & "$SdkPath/build-tools/36.0.0/apksigner.bat" verify --verbose $destination
     if ($LASTEXITCODE -ne 0) { throw 'APK signature verification failed.' }
-    $digest = (Get-FileHash -Algorithm SHA256 $destination).Hash.ToLower()
-    [IO.File]::WriteAllText("$destination.sha256", "$digest  $apkName`n")
     Write-Output "Installable APK: $destination"
 } finally { Pop-Location }

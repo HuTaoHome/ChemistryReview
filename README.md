@@ -12,12 +12,6 @@
 
 最低支持 **Android 6.0（API 23）**。可在设置中导出进度作为备份。
 
-Release 同时提供 SHA-256 校验文件。在 PowerShell 中可执行：
-
-```powershell
-Get-FileHash .\chemistry-review-1.0.apk -Algorithm SHA256
-```
-
 ## 功能
 
 - **随时选择数据来源**：顶部常驻“网站数据 / 本地数据”按钮，记住上次选择。
